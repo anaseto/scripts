@@ -1,0 +1,97 @@
+#!/bin/sh
+#
+# USAGE: o [-p] [path]
+#
+# The program opens a file that the user selected with fzf. If path is provided
+# and is a directory, search is done there. If path is a regular file, it is
+# opened.  If -p option is provided, the program just prints the list of files
+# from which selection would be done.
+#
+# The O_OPEN_COMMAND variable allows to use custom command to open files; default is
+# xdg-open. The O_FUZZY_FINDER variable allows to use custom fuzzy finder;
+# default is "fzf".
+#
+# Install: put the file in your $PATH.
+#
+# Assuming fzf is used, integration with vim can be done for example adding the
+# following mapping to ~/.vimrc:
+#
+#	nnoremap <Leader>ff :call fzf#run({'source': 'o -p', 'sink': 'e', 'down': '40%'})<CR>
+#
+
+find_regular() {
+	# search files with depth at most $1, skipping hidden files.
+	find . -type d -name '[._][!/]*' -prune -o -maxdepth $1 -type f -print
+}
+
+absolutize() {
+	perl -ne 'BEGIN{$f=shift} print "$f/$_";' "$(pwd)"
+}
+
+list_files() {
+	local file
+	local nfiles
+	local cmd=""
+	local olddir="$(pwd)"
+	while [ -z "$cmd" ]; do
+		# use ls from vcs if within a repository
+		if [ -f .fslckout ]; then
+			cmd="fossil ls"
+		elif [ -d .git ]; then
+			cmd="git ls-files"
+		elif [ "$(pwd)" != "/" ]; then
+			cd .. || break
+		else
+			break
+		fi
+	done
+	if [ -z "$cmd" ]; then
+		cd "$olddir"
+		# If it seems to be a little too much files, we limit search
+		# depth (not that useful if the disk is an SSD).
+		nfiles="$(find_regular 2 | wc -l | awk '{print $1}')"
+		if [ $nfiles -gt 1000 ]; then
+			find_regular 3 | absolutize
+			return
+		fi
+	fi
+	if [ -n "$cmd" ]; then
+		eval "$cmd" | absolutize
+	else
+		if command -v ag > /dev/null 2>&1; then
+			ag -g "" | absolutize
+		else
+			find_regular 42 | absolutize
+		fi
+	fi
+}
+
+main() {
+	local p
+	local file
+	getopts "p" p
+	if [ "$p" == "p" ]; then
+		shift $((OPTIND-1))
+	fi
+	local f="$1"
+	if [ -n "$f" ]; then
+		if [ -d "$f" ]; then
+			# if directory is given, go there
+			cd $f
+		else
+			file="$f"
+		fi
+	fi	
+	if [ "$p" == "p" ]; then
+		if [ -n "$file" ]; then
+			print -r -- "$file"
+		else
+			list_files
+		fi
+	else
+		[ -z "$file" ] && file=$(list_files | ${O_FUZZY_FINDER:-fzf})
+		[ -f "$file" ] && ${O_OPEN_COMMAND:-xdg-open} "$file"
+	fi
+}
+
+main $@
