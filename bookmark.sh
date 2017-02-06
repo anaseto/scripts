@@ -15,6 +15,9 @@ d() {
 	local cmd="$1"
 	local bookmarks_file="${D_BOOKMARKS:-"$HOME/.d_bookmarks"}"
 	local lock_file="${bookmarks_file}.lock"
+	if [ ! -f "$bookmarks_file" ]; then
+		touch "$bookmarks_file"
+	fi
 	local file
 	if [ "$cmd" == "b" ]; then
 		file="$(pwd)"
@@ -32,13 +35,11 @@ d() {
 		return 1
 	}
 	if mkdir "$lock_file" > /dev/null 2>&1; then
-		# create bookmarks file if it does not exist
-		touch "$bookmarks_file"
 		# put $file at the end of the bookmarks file,
 		# to keep it sorted by last time usage.
 		perl -i.back -ne 'BEGIN{$f = quotemeta(shift);} print unless /^$f$/;' \
 			"$file" "$bookmarks_file" &&
-		print -r -- "$file" >> "$bookmarks_file" ||
+		echo "$file" >> "$bookmarks_file" ||
 			echo "d: something went wrong updating bookmarks file" >&2
 		rmdir "$lock_file" || {
 			echo "d: could not remove lock file '$lock_file'" >&2

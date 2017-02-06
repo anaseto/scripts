@@ -84,7 +84,7 @@ main() {
 	fi	
 	if [ "$p" == "p" ]; then
 		if [ -n "$file" ]; then
-			print -r -- "$file"
+			echo "$file"
 		else
 			list_files
 		fi
