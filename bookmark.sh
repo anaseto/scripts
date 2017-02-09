@@ -25,7 +25,7 @@ d() {
 		echo "d: unknown argument: '$cmd'. Expected 'b' or no argument." >&2
 		return 1
 	else
-		file="$(<"$bookmarks_file" ${D_FUZZY_FINDER:-fzf})"
+		file="$(<"$bookmarks_file" ${D_FUZZY_FINDER:-fzf --tac})"
 	fi
 	if [ ! -d "$file" ]; then
 		return
