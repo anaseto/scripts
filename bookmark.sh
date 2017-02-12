@@ -19,7 +19,7 @@ d() {
 		touch "$bookmarks_file"
 	fi
 	local file
-	if [ "$cmd" == "b" ]; then
+	if [ "$cmd" = "b" ]; then
 		file="$(pwd)"
 	elif [ -n "$cmd" ]; then
 		echo "d: unknown argument: '$cmd'. Expected 'b' or no argument." >&2

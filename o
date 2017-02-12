@@ -70,7 +70,7 @@ main() {
 	local p
 	local file
 	getopts "p" p
-	if [ "$p" == "p" ]; then
+	if [ "$p" = "p" ]; then
 		shift $((OPTIND-1))
 	fi
 	local f="$1"
@@ -82,7 +82,7 @@ main() {
 			file="$f"
 		fi
 	fi	
-	if [ "$p" == "p" ]; then
+	if [ "$p" = "p" ]; then
 		if [ -n "$file" ]; then
 			echo "$file"
 		else
