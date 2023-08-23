@@ -1,3 +1,5 @@
+**Migrated to https://codeberg.org/anaseto/scripts because of new 2FA requirement**
+
 Description
 -----------
 
